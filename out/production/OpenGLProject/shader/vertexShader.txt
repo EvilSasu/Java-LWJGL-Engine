@@ -1,0 +1,31 @@
+#version 400 core
+
+in vec3 position;
+in vec2 in_textureCoords;
+in vec3 normal;
+
+out vec2 pass_textureCoords;
+out vec3 surfaceNormal;
+out vec3 toLightVector;
+out vec3 toCameraVector;
+
+uniform mat4 transformationMatrix;
+uniform mat4 projectionMatrix;
+uniform mat4 viewMatrix;
+uniform vec3 lightPosition;
+uniform float useFakeLightning;
+
+void main(void){
+    vec4 worldPosition = transformationMatrix * vec4(position,1.0); // pozycja w obiektu w swiecie
+    gl_Position = projectionMatrix * viewMatrix * worldPosition; // pozycja vertexu na ekranie
+    pass_textureCoords = in_textureCoords; // przypisanie do zmiennej kordow tekstury, idze do FS
+
+    vec3 actualNorm = normal;
+    if(useFakeLightning > 0.5) {
+        actualNorm = vec3(0.0, 1.0, 0.0);
+    } // sprawdza czy dany obiekt nie jest zbyt ciemny (za malo swiatla)
+
+    surfaceNormal = (transformationMatrix * vec4(actualNorm,0.0)).xyz; //vector normalsa
+    toLightVector = lightPosition - worldPosition.xyz; // vector padania swiatla
+    toCameraVector = (inverse(viewMatrix) * vec4(0.0,0.0,0.0,1.0)).xyz - worldPosition.xyz; // vector do kamery
+}
